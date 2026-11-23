@@ -155,6 +155,41 @@ table.bk td.ts{white-space:nowrap;color:var(--muted);font-size:14px}
 table.bk td.ts b{color:var(--ink);font-weight:500}
 table.bk tr.me td{background:var(--pink-soft)}
 table.bk tr.me td.nm{font-weight:600;color:#b0186f}
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:40;background:rgba(42,22,51,.45)}
+.modal.show{display:flex}
+.mbox{background:#fff;border-radius:22px;padding:22px 20px 18px;width:100%;max-width:380px;box-shadow:0 20px 50px rgba(0,0,0,.25);animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.94);opacity:0}}
+.mbox .ico{width:52px;height:52px;border-radius:50%;background:#ffe8dc;color:var(--warn);display:grid;place-items:center;margin:0 auto 10px;font-size:26px;font-weight:700}
+.mbox h3{font-family:"Prompt";font-weight:600;font-size:19px;text-align:center;margin:0 0 6px}
+.mbox p{text-align:center;color:var(--muted);margin:0 0 12px;font-size:15px}
+.mbox .days{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:14px}
+.mbox .days span{background:#fff1ea;color:var(--warn);border:1px solid #ffd2bd;border-radius:999px;padding:3px 12px;font-family:"Prompt";font-weight:500}
+.mbox label{display:block;font-size:14px;color:var(--ink);margin-bottom:6px;text-align:center}
+.mbox input{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--line);font:inherit;font-size:17px;text-align:center;outline:none}
+.mbox input:focus{border-color:var(--warn)}
+.mbox .acts{display:flex;gap:10px;margin-top:14px}
+.mbox .btn.danger{background:var(--warn);box-shadow:0 6px 18px rgba(217,72,15,.3)}
+.mbox .btn.danger:disabled{background:#e9c9bb;box-shadow:none;opacity:1}
+.ltitle{font-family:"Prompt";font-weight:600;font-size:20px;margin:0}
+.lsub{color:var(--muted);margin:4px 0 14px;font-size:15px}
+.flabel{display:block;font-size:14px;color:var(--muted);font-weight:600;margin:14px 0 6px}
+.pin{width:100%;padding:14px;border-radius:14px;border:1.5px solid var(--line);font:inherit;font-size:22px;letter-spacing:.4em;text-align:center;outline:none;background:#fff;color:var(--ink)}
+.pin:focus{border-color:var(--pink)}
+.btn.full{width:100%;margin-top:16px}
+.lnote{text-align:center;color:var(--muted);font-size:13px;margin:12px 0 0}
+.me{display:flex;align-items:center;gap:12px}
+.me .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--pink);font-family:"Prompt";font-weight:600;font-size:19px;flex:none}
+.me b{font-family:"Prompt";font-weight:600;font-size:18px;display:block}
+.me small{color:var(--muted);font-size:14px}
+.badge{display:inline-block;background:var(--purple);color:#fff;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;margin-left:4px;vertical-align:1px}
+.links{display:flex;gap:8px;margin-top:12px}
+.links button{flex:1;padding:9px;border-radius:11px;background:var(--purple-soft);color:var(--purple);font-size:14px;font-weight:600}
+.links button#btnOut{background:#fff;border:1.5px solid var(--line);color:var(--muted)}
+.xbtn{padding:5px 10px;border-radius:9px;border:1.5px solid #ffc9b0;color:var(--warn);background:#fff;font-size:13px;font-weight:600}
+table.bk td.ac{width:1%;text-align:right;padding-right:2px}
+.mbox .ico.lock{background:var(--purple-soft);font-size:22px}
+.mbox .pin{font-size:20px}
+.mbox .flabel{text-align:left;margin-top:10px}
 .install{display:none;margin-top:14px;font-size:14px;color:var(--purple);background:var(--purple-soft);border-radius:14px;padding:10px 14px}
 </style>
 </head>
@@ -173,16 +208,47 @@ table.bk tr.me td.nm{font-weight:600;color:#b0186f}
 </header>
 
 <div class="wrap">
+
+  <!-- ===== หน้าเข้าสู่ระบบ ===== -->
+  <div id="loginView" style="display:none">
+    <div class="card lift">
+      <h2 class="ltitle">เข้าสู่ระบบ</h2>
+      <p class="lsub">เลือกกลุ่มและชื่อของคุณ แล้วใส่ PIN</p>
+      <div class="seg" role="tablist">
+        <button id="lgRN" class="on">วิสัญญีพยาบาล</button>
+        <button id="lgAS">ผู้ช่วยวิสัญญี</button>
+      </div>
+      <button class="who empty" id="lgWho">
+        <div class="av" id="lgAv">?</div>
+        <div class="t"><small>ชื่อ</small><b id="lgName">แตะเพื่อเลือกชื่อ</b></div>
+        <span class="chev">›</span>
+      </button>
+      <label class="flabel" for="lgPin">PIN</label>
+      <input class="pin" id="lgPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password" placeholder="••••">
+      <button class="btn full" id="lgGo">เข้าสู่ระบบ</button>
+      <p class="lnote">ยังไม่มี PIN หรือลืม PIN ติดต่อทีมผู้รับผิดชอบ</p>
+    </div>
+    <div id="lgBanners"></div>
+  </div>
+
+  <!-- ===== แอปหลัก ===== -->
+  <div id="appView" style="display:none">
   <div class="card lift">
-    <div class="seg" role="tablist">
+    <div class="me">
+      <div class="av" id="meAv">?</div>
+      <div class="t">
+        <b id="meName"></b>
+        <small id="meRole"></small>
+      </div>
+    </div>
+    <div class="links">
+      <button id="btnPin">เปลี่ยน PIN</button>
+      <button id="btnOut">ออกจากระบบ</button>
+    </div>
+    <div class="seg" role="tablist" style="margin-top:12px">
       <button id="tabRN" class="on">วิสัญญีพยาบาล</button>
       <button id="tabAS">ผู้ช่วยวิสัญญี</button>
     </div>
-    <button class="who empty" id="whoBtn">
-      <div class="av" id="whoAv">?</div>
-      <div class="t"><small>ผู้จอง</small><b id="whoName">แตะเพื่อเลือกชื่อ</b></div>
-      <span class="chev">›</span>
-    </button>
   </div>
 
   <div id="banners"></div>
@@ -197,7 +263,7 @@ table.bk tr.me td.nm{font-weight:600;color:#b0186f}
   <div class="card">
     <div class="cal-head">
       <h2 id="calTitle">ปฏิทิน</h2>
-      <span>แตะวันเพื่อเลือก / ยกเลิก</span>
+      <span id="calHint">แตะวันเพื่อเลือก / ยกเลิก</span>
     </div>
     <div id="cal"><div class="skel"></div></div>
     <div class="legend">
@@ -225,6 +291,7 @@ table.bk tr.me td.nm{font-weight:600;color:#b0186f}
       <div id="bkList"></div>
     </div>
   </div>
+  </div>
 
   <div class="foot">ข้อมูลบันทึกลง Google Sheet และแยกตามวันอัตโนมัติ</div>
 </div>
@@ -241,39 +308,93 @@ table.bk tr.me td.nm{font-weight:600;color:#b0186f}
   <div class="list" id="list"></div>
 </div>
 
+<!-- ยืนยันการยกเลิก -->
+<div class="modal" id="cxModal" role="dialog" aria-modal="true" aria-labelledby="cxTitle">
+  <div class="mbox">
+    <div class="ico">!</div>
+    <h3 id="cxTitle">ยืนยันการยกเลิกวันลา</h3>
+    <p id="cxWho"></p>
+    <div class="days" id="cxDays"></div>
+    <label for="cxInput">พิมพ์คำว่า <b>ยกเลิก</b> เพื่อยืนยัน</label>
+    <input id="cxInput" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ยกเลิก">
+    <div class="acts">
+      <button class="btn ghost" id="cxBack" style="flex:1">ไม่ยกเลิก</button>
+      <button class="btn danger" id="cxOk" disabled>ยืนยันยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- เปลี่ยน PIN -->
+<div class="modal" id="pinModal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+  <div class="mbox">
+    <div class="ico lock">🔒</div>
+    <h3 id="pinTitle">เปลี่ยน PIN</h3>
+    <p id="pinSub">PIN เป็นตัวเลข 4–6 หลัก ใช้เข้าสู่ระบบครั้งต่อไป</p>
+    <div id="pinOldWrap">
+      <label class="flabel" for="pinOld">PIN เดิม</label>
+      <input class="pin" id="pinOld" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="current-password">
+    </div>
+    <label class="flabel" for="pinNew">PIN ใหม่</label>
+    <input class="pin" id="pinNew" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password">
+    <label class="flabel" for="pinNew2">ยืนยัน PIN ใหม่</label>
+    <input class="pin" id="pinNew2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password">
+    <div class="acts">
+      <button class="btn ghost" id="pinBack" style="flex:1">ภายหลัง</button>
+      <button class="btn" id="pinOk">บันทึก PIN</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============ ตั้งค่า ============ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxROGXEK6MFM26Q8JauZlw4PbQOAUek9CJdHAXPJ9UhOFm703yWdpJs8f1a9m0QMVkN/exec'; // ← วาง URL ของ Apps Script Web App (ลงท้าย /exec) ตรงนี้
 /* ================================= */
-
+{
 const TH_MONTH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const DOW = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+const DAYNAME = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const GNAME = {RN:'วิสัญญีพยาบาล', AS:'ผู้ช่วยวิสัญญี'};
 const $ = id => document.getElementById(id);
 const store = {
   get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
-  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
 };
+let savedMe = null; try{ savedMe = JSON.parse(store.get('jv_me') || 'null'); }catch(e){}
 
 const S = {
-  group: store.get('jv_group') || 'RN',      // 'RN' | 'AS'
-  name: { RN: store.get('jv_name_RN') || '', AS: store.get('jv_name_AS') || '' },
+  token: store.get('jv_token') || '', me: savedMe,
+  group: savedMe ? savedMe.group : 'RN',
+  loginGroup: 'RN', loginCode: '', lastPin: '',
   config: null, names: [], bookings: {},
   add: new Set(), del: new Set(), focus: null, busy: false,
-  view: 'cal', dayFilter: ''
+  view: 'cal', dayFilter: '', cx: null
 };
 
-/* ---------- demo data (ใช้เมื่อยังไม่ใส่ API_URL) ---------- */
+/* ---------- utils ---------- */
+const pad = n => String(n).padStart(2,'0');
+const rowsFor = (d,g) => (((S.bookings[d]||{})[g||S.group]) || []).map(x => typeof x==='string' ? {n:x,t:0} : x);
+const listFor = (d,g) => rowsFor(d,g).map(x => x.n);
+const maxFor = () => S.group==='RN' ? S.config.maxRN : S.config.maxAS;
+const myGroupView = () => S.me && S.group===S.me.group;
+function fmtTs(t){ if(!t) return '—'; const d=new Date(t);
+  return d.getDate()+' '+TH_SHORT[d.getMonth()]+' '+String(d.getFullYear()+543).slice(-2)+' <b>'+pad(d.getHours())+':'+pad(d.getMinutes())+'</b>:'+pad(d.getSeconds()); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+let tt;
+function toast(m, t){ const el=$('toast'); el.textContent=m; el.className='toast show '+(t||''); clearTimeout(tt); tt=setTimeout(()=>el.className='toast', 3400); }
+
+/* ---------- demo (ยังไม่ใส่ API_URL): PIN ทุกคน = 1234, คนแรกของรายชื่อพยาบาลเป็นผู้ดูแล ---------- */
 function demoData(){
-  const now = new Date(), y = now.getFullYear(), m = now.getMonth()+2 > 12 ? 1 : now.getMonth()+2;
-  const yy = m===1 ? y+1 : y;
+  const now = new Date(), m = now.getMonth()+2 > 12 ? 1 : now.getMonth()+2, yy = m===1 ? now.getFullYear()+1 : now.getFullYear();
   const rn = ['ผกามาศ','กรรณิการ์','นิธิมา','ลัดดาวัลย์','อัญชลี','พัชรี','จิตรลดา','อัสนีพร','มาริซา','ปทุมพร','ขวัญฤทัย','ดลฤดี'];
   const pn = ['วัลลภ','วิมลศรี','กรวิภา','พรฤทัย','อรอนงค์','วนิดา'];
   const na = ['สุจิตรา','มารศรี','สุนิสา','ดารณี','สุกัญญา','อรุณวรรณ์'];
-  const names = [...rn.map((n,i)=>({group:'RN',label:'วิสัญญีพยาบาล',code:String(i).padStart(3,'0'),name:n})),
-    ...pn.map((n,i)=>({group:'PN',label:'ผู้ช่วยวิสัญญี (PN)',code:'PN '+(i+1),name:n})),
-    ...na.map((n,i)=>({group:'NA',label:'ผู้ช่วยวิสัญญี (NA)',code:'NA '+(i+1),name:n}))];
+  const names = [...rn.map((n,i)=>({group:'RN',label:'วิสัญญีพยาบาล',code:pad(i).padStart(3,'0'),name:n})),
+    ...pn.map((n,i)=>({group:'PN',label:'ผู้ช่วยวิสัญญี (PN)',code:'PN '+pad(i+1),name:n})),
+    ...na.map((n,i)=>({group:'NA',label:'ผู้ช่วยวิสัญญี (NA)',code:'NA '+pad(i+1),name:n}))];
   const t0 = Date.now() - 86400000, T = (h,mi) => t0 + h*3600000 + mi*60000;
   const b = {'08':{RN:[{n:'ลัดดาวัลย์',t:T(0,5)}],AS:[]},
              '09':{RN:[{n:'ลัดดาวัลย์',t:T(0,6)},{n:'พัชรี',t:T(2,40)}],AS:[{n:'สุกัญญา',t:T(1,20)}]},
@@ -281,17 +402,38 @@ function demoData(){
              '15':{RN:[{n:'ขวัญฤทัย',t:T(3,2)}],AS:[{n:'วนิดา',t:T(0,50)},{n:'ดารณี',t:T(4,11)}]}};
   return { ok:true, config:{year:yy,month:m,daysInMonth:new Date(yy,m,0).getDate(),open:true,maxRN:0,maxAS:0,notice:''}, names, bookings:b };
 }
+function demoApi(action, p){
+  const D = S._demo, b = D.bookings;
+  const who = code => { const n = D.names.find(x=>x.code===code); return n && {code:n.code,name:n.name,group:n.group==='RN'?'RN':'AS',admin:n.code==='000'}; };
+  if(action==='login'){ if(p.pin!=='1234') return {ok:false,error:'PIN ไม่ถูกต้อง (โหมดตัวอย่าง PIN = 1234)'}; return {ok:true,token:'demo:'+p.code,me:who(p.code),mustChange:false}; }
+  const me = who(String(p.token||'').slice(5)); if(!me) return {ok:false,auth:true,error:'กรุณาเข้าสู่ระบบ'};
+  if(action==='me') return {ok:true,me}; if(action==='logout'||action==='changePin') return {ok:true};
+  const rm = (g,name,days) => { let n=0; days.forEach(d=>{ const a=(b[d]||{})[g]||[]; const i=a.findIndex(x=>x.n===name); if(i>=0){a.splice(i,1);n++;} }); return n; };
+  if(action==='cancel') return {ok:true,removed:rm(me.group,me.name,p.days),bookings:b};
+  if(action==='adminCancel'){ if(!me.admin) return {ok:false,error:'เฉพาะผู้ดูแล'}; return {ok:true,removed:rm(p.group,p.name,p.days),bookings:b}; }
+  if(action==='book'){ const added=[]; p.days.forEach(d=>{ b[d]=b[d]||{RN:[],AS:[]}; if(!b[d][me.group].some(x=>x.n===me.name)){ b[d][me.group].push({n:me.name,t:Date.now()}); added.push(d);} }); return {ok:true,added,skipped:[],bookings:b}; }
+}
 
 /* ---------- API ---------- */
+async function api(action, payload){
+  const body = Object.assign({ action, token:S.token }, payload||{});
+  let d;
+  if(!API_URL) d = demoApi(action, body);
+  else{
+    const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body) });
+    d = await r.json();
+  }
+  if(d && d.auth){ localLogout(); toast(d.error || 'กรุณาเข้าสู่ระบบใหม่', 'err'); throw new Error('__auth'); }
+  if(!d || !d.ok) throw new Error((d && d.error) || 'ไม่สำเร็จ');
+  return d;
+}
+
 async function load(){
   $('refresh').classList.add('spin');
   try{
     let d;
     if(!API_URL){ d = S._demo || (S._demo = demoData()); }
-    else {
-      const r = await fetch(API_URL + '?t=' + Date.now());
-      d = await r.json();
-    }
+    else { const r = await fetch(API_URL + '?t=' + Date.now()); d = await r.json(); }
     if(!d.ok) throw new Error(d.error || 'โหลดข้อมูลไม่สำเร็จ');
     S.config = d.config; S.names = d.names; S.bookings = d.bookings || {};
     render();
@@ -299,81 +441,118 @@ async function load(){
   finally{ $('refresh').classList.remove('spin'); }
 }
 
-async function send(action){
-  const days = [...(action==='cancel' ? S.del : S.add)].sort();
-  if(!days.length || S.busy) return;
-  const name = S.name[S.group];
-  if(!name){ openSheet(); return; }
+/* ---------- login / logout / PIN ---------- */
+async function doLogin(){
+  const pin = $('lgPin').value.trim();
+  if(!S.loginCode){ openSheet(); return toast('เลือกชื่อก่อนนะคะ'); }
+  if(!/^\d{4,6}$/.test(pin)) return toast('ใส่ PIN ตัวเลข 4–6 หลัก', 'err');
+  $('lgGo').disabled = true; $('lgGo').textContent = 'กำลังตรวจสอบ…';
+  try{
+    const d = await api('login', { code:S.loginCode, pin });
+    S.token = d.token; S.me = d.me; S.group = d.me.group; S.lastPin = pin;
+    store.set('jv_token', d.token); store.set('jv_me', JSON.stringify(d.me));
+    $('lgPin').value = '';
+    render();
+    toast('สวัสดีค่ะ ' + d.me.name, 'ok');
+    if(d.mustChange) openPin(true);
+  }catch(e){ if(e.message!=='__auth') toast(e.message, 'err'); }
+  finally{ $('lgGo').disabled = false; $('lgGo').textContent = 'เข้าสู่ระบบ'; }
+}
+function localLogout(){
+  S.token=''; S.me=null; S.add.clear(); S.del.clear(); S.lastPin='';
+  store.del('jv_token'); store.del('jv_me'); render();
+}
+async function doLogout(){ const t=S.token; localLogout(); try{ if(t) await api('logout',{token:t}); }catch(e){} }
+
+function openPin(first){
+  $('pinTitle').textContent = first ? 'ตั้ง PIN ของคุณเอง' : 'เปลี่ยน PIN';
+  $('pinSub').textContent = first ? 'PIN ที่ได้รับเป็น PIN ชั่วคราว แนะนำให้ตั้งใหม่ (ตัวเลข 4–6 หลัก)' : 'PIN เป็นตัวเลข 4–6 หลัก ใช้เข้าสู่ระบบครั้งต่อไป';
+  $('pinOldWrap').style.display = first && S.lastPin ? 'none' : '';
+  $('pinOld').value = first ? S.lastPin : ''; $('pinNew').value=''; $('pinNew2').value='';
+  $('pinModal').classList.add('show');
+}
+async function savePin(){
+  const o=$('pinOld').value.trim(), n=$('pinNew').value.trim(), n2=$('pinNew2').value.trim();
+  if(!/^\d{4,6}$/.test(n)) return toast('PIN ใหม่ต้องเป็นตัวเลข 4–6 หลัก','err');
+  if(n!==n2) return toast('PIN ใหม่ทั้ง 2 ช่องไม่ตรงกัน','err');
+  $('pinOk').disabled = true;
+  try{ await api('changePin',{oldPin:o,newPin:n}); $('pinModal').classList.remove('show'); S.lastPin=''; toast('บันทึก PIN ใหม่แล้ว','ok'); }
+  catch(e){ if(e.message!=='__auth') toast(e.message,'err'); }
+  finally{ $('pinOk').disabled = false; }
+}
+
+/* ---------- book / cancel ---------- */
+async function book(){
+  const days = [...S.add].sort(); if(!days.length || S.busy) return;
   S.busy = true; renderBar();
   try{
-    let d;
-    if(!API_URL){ d = demoSend(action, name, days); }
-    else{
-      const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ action, group:S.group, name, days }) });
-      d = await r.json();
-    }
-    if(!d.ok) throw new Error(d.error);
-    S.bookings = d.bookings || S.bookings;
-    if(action==='cancel'){ S.del.clear(); toast('ยกเลิกแล้ว ' + d.removed + ' วัน', 'ok'); }
-    else{
-      S.add.clear();
-      let msg = d.added.length ? 'จองสำเร็จ ' + d.added.length + ' วัน ✓' : 'ไม่มีวันที่จองเพิ่ม';
-      if(d.skipped && d.skipped.length) msg += ' · ข้าม: ' + d.skipped.map(s=>s.replace(/^0/,'')).join(', ');
-      toast(msg, d.added.length ? 'ok' : 'err');
-    }
+    const d = await api('book', { days });
+    S.bookings = d.bookings || S.bookings; S.add.clear();
+    let msg = d.added.length ? 'จองสำเร็จ ' + d.added.length + ' วัน ✓' : 'ไม่มีวันที่จองเพิ่ม';
+    if(d.skipped && d.skipped.length) msg += ' · ข้าม: ' + d.skipped.map(s=>s.replace(/^0/,'')).join(', ');
+    toast(msg, d.added.length ? 'ok' : 'err');
     if(navigator.vibrate) navigator.vibrate(30);
-  }catch(e){ toast(e.message || 'ส่งข้อมูลไม่สำเร็จ', 'err'); }
+  }catch(e){ if(e.message!=='__auth') toast(e.message || 'ส่งข้อมูลไม่สำเร็จ', 'err'); }
   finally{ S.busy = false; render(); }
 }
 
-function demoSend(action, name, days){
-  const g = S.group, b = S.bookings;
-  if(action==='cancel'){ let n=0; days.forEach(d=>{ const a=(b[d]||{})[g]||[]; const i=a.findIndex(x=>x.n===name); if(i>=0){a.splice(i,1);n++;} }); return {ok:true,removed:n,bookings:b}; }
-  const added=[]; days.forEach(d=>{ b[d]=b[d]||{RN:[],AS:[]}; if(!b[d][g].some(x=>x.n===name)){ b[d][g].push({n:name,t:Date.now()}); added.push(d);} });
-  return {ok:true,added,skipped:[],bookings:b};
+function openCancel(target){
+  S.cx = target;
+  const own = target.name===S.me.name && target.group===S.me.group;
+  $('cxTitle').textContent = own ? 'ยืนยันการยกเลิกวันลา' : 'ยกเลิกวันลาของผู้อื่น (ผู้ดูแล)';
+  $('cxWho').textContent = target.name + ' · ' + GNAME[target.group] + ' · ' + target.days.length + ' วัน';
+  $('cxDays').innerHTML = target.days.map(k=>'<span>'+(+k)+' '+TH_SHORT[S.config.month-1]+'</span>').join('');
+  $('cxInput').value=''; $('cxOk').disabled=true;
+  $('cxModal').classList.add('show');
+  setTimeout(()=>$('cxInput').focus(), 60);
+}
+async function doCancel(){
+  const t = S.cx; if(!t || S.busy) return;
+  const own = t.name===S.me.name && t.group===S.me.group;
+  const action = (!own || S.me.admin) ? 'adminCancel' : 'cancel';
+  S.busy = true; renderBar();
+  try{
+    const d = await api(action, { group:t.group, name:t.name, days:t.days });
+    S.bookings = d.bookings || S.bookings;
+    t.days.forEach(k=>S.del.delete(k));
+    toast('ยกเลิกแล้ว ' + d.removed + ' วัน', 'ok');
+  }catch(e){ if(e.message!=='__auth') toast(e.message, 'err'); }
+  finally{ S.busy = false; S.cx = null; render(); }
 }
 
 /* ---------- render ---------- */
-const pad = n => String(n).padStart(2,'0');
-const rowsFor = (d,g) => (((S.bookings[d]||{})[g||S.group]) || []).map(x => typeof x==='string' ? {n:x,t:0} : x);
-const listFor = (d,g) => rowsFor(d,g).map(x => x.n);
-const TH_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-const DAYNAME = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-function fmtTs(t){ if(!t) return '—'; const d=new Date(t);
-  return d.getDate()+' '+TH_SHORT[d.getMonth()]+' '+String(d.getFullYear()+543).slice(-2)+' <b>'+pad(d.getHours())+':'+pad(d.getMinutes())+'</b>:'+pad(d.getSeconds()); }
-const maxFor = () => S.group==='RN' ? S.config.maxRN : S.config.maxAS;
-
 function render(){
-  const c = S.config; if(!c) return;
-  const title = TH_MONTH[c.month-1] + ' ' + (c.year + 543);
+  const logged = !!S.me;
+  $('loginView').style.display = logged ? 'none' : '';
+  $('appView').style.display = logged ? '' : 'none';
+  if(!S.config) return;
+  const title = TH_MONTH[S.config.month-1] + ' ' + (S.config.year + 543);
   $('monthLabel').textContent = 'เปิดจองวันลาเดือน ' + title;
-  $('calTitle').textContent = title;
+  if(!logged){ renderLogin(); renderBar(); return; }
+
+  const c = S.config, me = S.me;
+  $('meAv').textContent = me.name.charAt(0);
+  $('meName').textContent = me.name;
+  $('meRole').innerHTML = GNAME[me.group] + (me.admin ? ' <span class="badge">ผู้ดูแล</span>' : '');
   $('tabRN').classList.toggle('on', S.group==='RN');
   $('tabAS').classList.toggle('on', S.group==='AS');
-
-  const nm = S.name[S.group];
-  $('whoBtn').classList.toggle('empty', !nm);
-  $('whoName').textContent = nm || 'แตะเพื่อเลือกชื่อ';
-  $('whoAv').textContent = nm ? nm.trim().charAt(0) : '?';
+  $('calTitle').textContent = title;
+  $('calHint').textContent = myGroupView() ? 'แตะวันเพื่อเลือก / ยกเลิก' : 'ดูอย่างเดียว (ไม่ใช่กลุ่มของคุณ)';
 
   let bn = '';
   if(!API_URL) bn += '<div class="notice demo">โหมดตัวอย่าง — ยังไม่ได้เชื่อม Google Sheet ข้อมูลจะไม่ถูกบันทึก</div>';
-  if(!c.open) bn += '<div class="notice closed">ขณะนี้ปิดรับจองวันลาแล้ว (ดูรายชื่อได้อย่างเดียว)</div>';
+  if(!c.open) bn += '<div class="notice closed">ขณะนี้ปิดรับจองแล้ว (ดูรายชื่อได้อย่างเดียว)</div>';
   if(c.notice) bn += '<div class="notice">' + esc(c.notice) + '</div>';
   $('banners').innerHTML = bn;
 
-  // calendar
-  const first = new Date(c.year, c.month-1, 1).getDay();
+  const nm = myGroupView() ? me.name : null;
+  const first = new Date(c.year, c.month-1, 1).getDay(), mx = maxFor();
   let h = DOW.map((d,i)=>'<div class="dow'+(i===0||i===6?' we':'')+'">'+d+'</div>').join('');
   for(let i=0;i<first;i++) h += '<div></div>';
-  const mx = maxFor();
   for(let d=1; d<=c.daysInMonth; d++){
-    const k = pad(d), arr = listFor(k), dow = (first + d - 1) % 7;
-    const mine = nm && arr.includes(nm);
-    const cls = ['day'];
+    const k = pad(d), arr = listFor(k), dow = (first + d - 1) % 7, cls = ['day'];
     if(dow===0||dow===6) cls.push('we');
-    if(mine) cls.push('mine');
+    if(nm && arr.includes(nm)) cls.push('mine');
     if(S.add.has(k)) cls.push('sel');
     if(S.del.has(k)) cls.push('xsel');
     if(mx && arr.length>=mx) cls.push('full');
@@ -382,7 +561,6 @@ function render(){
     h += '<button class="'+cls.join(' ')+'" data-d="'+k+'">'+d+'<span class="cnt">'+cnt+'</span></button>';
   }
   $('cal').innerHTML = '<div class="grid">'+h+'</div>';
-
   $('vCal').classList.toggle('on', S.view==='cal');
   $('vList').classList.toggle('on', S.view==='list');
   $('viewCal').style.display = S.view==='cal' ? '' : 'none';
@@ -390,44 +568,55 @@ function render(){
   renderDetail(); renderMine(); renderList(); renderBar();
 }
 
+function renderLogin(){
+  $('lgRN').classList.toggle('on', S.loginGroup==='RN');
+  $('lgAS').classList.toggle('on', S.loginGroup==='AS');
+  const n = S.names.find(x=>x.code===S.loginCode);
+  $('lgWho').classList.toggle('empty', !n);
+  $('lgName').textContent = n ? n.name : 'แตะเพื่อเลือกชื่อ';
+  $('lgAv').textContent = n ? n.name.charAt(0) : '?';
+  $('lgBanners').innerHTML = !API_URL ? '<div class="notice demo">โหมดตัวอย่าง — ใช้ PIN 1234 ได้ทุกชื่อ (ชื่อแรกของพยาบาลเป็นผู้ดูแล)</div>' : '';
+}
+
+function renderDetail(){
+  const c = S.config, k = S.focus;
+  if(!k){ $('detail').innerHTML = '<h3>รายชื่อผู้จอง</h3><div class="none">แตะวันที่ในปฏิทินเพื่อดูรายชื่อผู้จองของวันนั้น</div>'; return; }
+  const b = {RN:listFor(k,'RN'), AS:listFor(k,'AS')};
+  const dt = new Date(c.year, c.month-1, +k);
+  const chip = (a,g) => a.length ? '<div class="chips">'+a.map(n=>'<span class="chip'+(g===S.me.group&&n===S.me.name?' me':'')+'">'+esc(n)+'</span>').join('')+'</div>' : '<div class="none">— ยังไม่มี —</div>';
+  $('detail').innerHTML = '<h3>วัน'+DAYNAME[dt.getDay()]+'ที่ '+(+k)+' '+TH_MONTH[c.month-1]+'</h3>'+
+    '<div class="cols"><div><h4>วิสัญญีพยาบาล ('+b.RN.length+')</h4>'+chip(b.RN,'RN')+'</div><div><h4>ผู้ช่วยวิสัญญี ('+b.AS.length+')</h4>'+chip(b.AS,'AS')+'</div></div>';
+}
+
+function renderMine(){
+  const me = S.me;
+  const days = Object.keys(S.bookings).filter(k=>listFor(k, me.group).includes(me.name)).sort();
+  $('mineCard').style.display='';
+  $('mineCount').textContent = days.length + ' วัน';
+  $('mine').innerHTML = days.length ? days.map(k=>'<span class="chip">'+(+k)+'</span>').join('') : '<div class="none">ยังไม่ได้จอง</div>';
+}
+
 function renderList(){
-  const c = S.config, nm = S.name[S.group];
+  const c = S.config, me = S.me;
   $('listTitle').textContent = 'รายการจอง · ' + (S.group==='RN' ? 'พยาบาล' : 'ผู้ช่วย');
   let opt = '<option value="">ทุกวัน</option>';
   for(let d=1; d<=c.daysInMonth; d++){ const k=pad(d), n=listFor(k).length; opt += '<option value="'+k+'"'+(S.dayFilter===k?' selected':'')+'>วันที่ '+d+(n?' ('+n+')':'')+'</option>'; }
   $('dayFilter').innerHTML = opt;
   const days = S.dayFilter ? [S.dayFilter] : Object.keys(S.bookings).filter(k=>listFor(k).length).sort();
   if(!days.length || (S.dayFilter && !listFor(S.dayFilter).length)){ $('bkList').innerHTML = '<div class="none">ยังไม่มีการจอง</div>'; return; }
+  const canX = r => me.admin || (myGroupView() && r.n===me.name && c.open);
   $('bkList').innerHTML = days.map(k => {
     const dt = new Date(c.year, c.month-1, +k), we = dt.getDay()===0||dt.getDay()===6, rows = rowsFor(k);
     return '<div class="dgrp"><h4 class="'+(we?'we':'')+'">วัน'+DAYNAME[dt.getDay()]+'ที่ '+(+k)+' '+TH_SHORT[c.month-1]+'<span>'+rows.length+' คน</span></h4>'+
-      '<table class="bk"><thead><tr><th style="text-align:center">ลำดับ</th><th>วันเวลาที่จอง</th><th>ชื่อ</th></tr></thead><tbody>'+
-      rows.map((r,i)=>'<tr class="'+(r.n===nm?'me':'')+'"><td class="no">'+(i+1)+'</td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+'</td></tr>').join('')+
+      '<table class="bk"><thead><tr><th style="text-align:center">ลำดับ</th><th>วันเวลาที่จอง</th><th>ชื่อ</th><th></th></tr></thead><tbody>'+
+      rows.map((r,i)=>'<tr class="'+(myGroupView()&&r.n===me.name?'me':'')+'"><td class="no">'+(i+1)+'</td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+'</td>'+
+        '<td class="ac">'+(canX(r)?'<button class="xbtn" data-d="'+k+'" data-n="'+esc(r.n)+'">ยกเลิก</button>':'')+'</td></tr>').join('')+
       '</tbody></table></div>';
   }).join('');
 }
 
-function renderDetail(){
-  const c = S.config, k = S.focus;
-  if(!k){ $('detail').innerHTML = '<h3>รายชื่อผู้จอง</h3><div class="none">แตะวันที่ในปฏิทินเพื่อดูรายชื่อผู้จองของวันนั้น</div>'; return; }
-  const b = {RN:listFor(k,'RN'), AS:listFor(k,'AS')}, nm = S.name[S.group];
-  const dt = new Date(c.year, c.month-1, +k);
-  const chip = (a,g) => a.length ? '<div class="chips">'+a.map(n=>'<span class="chip'+(g===S.group&&n===nm?' me':'')+'">'+esc(n)+'</span>').join('')+'</div>' : '<div class="none">— ยังไม่มี —</div>';
-  $('detail').innerHTML = '<h3>วัน'+DAYNAME[dt.getDay()]+'ที่ '+(+k)+' '+TH_MONTH[c.month-1]+'</h3>'+
-    '<div class="cols"><div><h4>วิสัญญีพยาบาล ('+b.RN.length+')</h4>'+chip(b.RN,'RN')+'</div><div><h4>ผู้ช่วยวิสัญญี ('+b.AS.length+')</h4>'+chip(b.AS,'AS')+'</div></div>';
-}
-
-function renderMine(){
-  const nm = S.name[S.group];
-  if(!nm){ $('mineCard').style.display='none'; return; }
-  const days = Object.keys(S.bookings).filter(k=>listFor(k).includes(nm)).sort();
-  $('mineCard').style.display='';
-  $('mineCount').textContent = days.length + ' วัน';
-  $('mine').innerHTML = days.length ? days.map(k=>'<span class="chip">'+(+k)+'</span>').join('') : '<div class="none">ยังไม่ได้จอง</div>';
-}
-
 function renderBar(){
-  const a = S.add.size, x = S.del.size, show = a||x;
+  const a = S.add.size, x = S.del.size, show = !!S.me && (a||x);
   $('bar').classList.toggle('show', !!show);
   if(!show) return;
   let h = '<button class="btn ghost" id="clr">ล้าง</button>';
@@ -435,19 +624,38 @@ function renderBar(){
   if(a) h += '<button class="btn" id="doAdd" '+(S.busy?'disabled':'')+'>'+(S.busy?'กำลังบันทึก…':'ยืนยันจอง '+a+' วัน')+'</button>';
   $('barIn').innerHTML = h;
   $('clr').onclick = () => { S.add.clear(); S.del.clear(); render(); };
-  if($('doAdd')) $('doAdd').onclick = () => send('book');
-  if($('doDel')) $('doDel').onclick = () => send('cancel');
+  if($('doAdd')) $('doAdd').onclick = book;
+  if($('doDel')) $('doDel').onclick = () => openCancel({ group:S.me.group, name:S.me.name, days:[...S.del].sort() });
+}
+
+/* ---------- name picker (login) ---------- */
+function openSheet(){
+  if(!S.names.length) return;
+  $('sheetTitle').textContent = S.loginGroup==='RN' ? 'เลือกชื่อ วิสัญญีพยาบาล' : 'เลือกชื่อ ผู้ช่วยวิสัญญี';
+  $('search').value=''; drawList('');
+  $('scrim').classList.add('show'); $('sheet').classList.add('show');
+}
+function closeSheet(){ $('scrim').classList.remove('show'); $('sheet').classList.remove('show'); }
+function drawList(q){
+  const pool = S.names.filter(n => S.loginGroup==='RN' ? n.group==='RN' : n.group!=='RN').filter(n => !q || n.name.includes(q));
+  const groups = {};
+  pool.forEach(n => (groups[n.label] = groups[n.label] || []).push(n));
+  let h = '';
+  Object.keys(groups).forEach(l => {
+    if(S.loginGroup==='AS') h += '<h5>'+l+'</h5>';
+    h += groups[l].map(n=>'<button class="opt'+(n.code===S.loginCode?' cur':'')+'" data-c="'+esc(n.code)+'"><span class="av">'+esc(n.name.charAt(0))+'</span>'+esc(n.name)+'<small>'+esc(n.code)+'</small></button>').join('');
+  });
+  $('list').innerHTML = h || '<div class="none" style="padding:12px 0">ไม่พบชื่อ</div>';
 }
 
 /* ---------- events ---------- */
 $('cal').addEventListener('click', e => {
-  const b = e.target.closest('.day'); if(!b) return;
-  const k = b.dataset.d, nm = S.name[S.group];
-  S.focus = k;
+  const b = e.target.closest('.day'); if(!b || !S.me) return;
+  const k = b.dataset.d; S.focus = k;
   if(!S.config.open){ render(); return; }
-  if(!nm){ render(); openSheet(); toast('เลือกชื่อก่อนจองนะคะ'); return; }
+  if(!myGroupView()){ render(); toast('จองได้เฉพาะกลุ่ม' + GNAME[S.me.group]); return; }
   const arr = listFor(k);
-  if(arr.includes(nm)){ S.del.has(k) ? S.del.delete(k) : S.del.add(k); }
+  if(arr.includes(S.me.name)){ S.del.has(k) ? S.del.delete(k) : S.del.add(k); }
   else{
     const mx = maxFor();
     if(!S.add.has(k) && mx && arr.length>=mx){ toast('วันที่ '+(+k)+' เต็มแล้ว', 'err'); render(); return; }
@@ -456,47 +664,37 @@ $('cal').addEventListener('click', e => {
   if(navigator.vibrate) navigator.vibrate(8);
   render();
 });
-
-function setGroup(g){ S.group=g; store.set('jv_group',g); S.add.clear(); S.del.clear(); render(); if(!S.name[g]) openSheet(); }
-$('tabRN').onclick = () => setGroup('RN');
-$('tabAS').onclick = () => setGroup('AS');
+$('bkList').addEventListener('click', e => {
+  const x = e.target.closest('.xbtn'); if(!x) return;
+  openCancel({ group:S.group, name:x.dataset.n, days:[x.dataset.d] });
+});
+const setView = g => { S.group=g; S.add.clear(); S.del.clear(); render(); };
+$('tabRN').onclick = () => setView('RN');
+$('tabAS').onclick = () => setView('AS');
+$('lgRN').onclick = () => { S.loginGroup='RN'; S.loginCode=''; renderLogin(); openSheet(); };
+$('lgAS').onclick = () => { S.loginGroup='AS'; S.loginCode=''; renderLogin(); openSheet(); };
+$('lgWho').onclick = openSheet;
+$('lgGo').onclick = doLogin;
+$('lgPin').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+$('btnOut').onclick = doLogout;
+$('btnPin').onclick = () => openPin(false);
+$('pinBack').onclick = () => $('pinModal').classList.remove('show');
+$('pinOk').onclick = savePin;
 $('refresh').onclick = load;
 $('vCal').onclick = () => { S.view='cal'; render(); };
 $('vList').onclick = () => { S.view='list'; render(); };
 $('dayFilter').onchange = e => { S.dayFilter = e.target.value; renderList(); };
-$('whoBtn').onclick = openSheet;
 $('scrim').onclick = closeSheet;
-
-function openSheet(){
-  if(!S.names.length) return;
-  $('sheetTitle').textContent = S.group==='RN' ? 'เลือกชื่อ วิสัญญีพยาบาล' : 'เลือกชื่อ ผู้ช่วยวิสัญญี';
-  $('search').value=''; drawList('');
-  $('scrim').classList.add('show'); $('sheet').classList.add('show');
-}
-function closeSheet(){ $('scrim').classList.remove('show'); $('sheet').classList.remove('show'); }
 $('search').addEventListener('input', e => drawList(e.target.value.trim()));
-
-function drawList(q){
-  const pool = S.names.filter(n => S.group==='RN' ? n.group==='RN' : n.group!=='RN').filter(n => !q || n.name.includes(q));
-  const groups = {};
-  pool.forEach(n => (groups[n.label] = groups[n.label] || []).push(n));
-  const cur = S.name[S.group];
-  let h = '';
-  Object.keys(groups).forEach(l => {
-    if(S.group==='AS') h += '<h5>'+l+'</h5>';
-    h += groups[l].map(n=>'<button class="opt'+(n.name===cur?' cur':'')+'" data-n="'+esc(n.name)+'"><span class="av">'+esc(n.name.charAt(0))+'</span>'+esc(n.name)+'<small>'+esc(n.code)+'</small></button>').join('');
-  });
-  $('list').innerHTML = h || '<div class="none" style="padding:12px 0">ไม่พบชื่อ</div>';
-}
 $('list').addEventListener('click', e => {
   const o = e.target.closest('.opt'); if(!o) return;
-  S.name[S.group] = o.dataset.n; store.set('jv_name_'+S.group, o.dataset.n);
-  S.add.clear(); S.del.clear(); closeSheet(); render();
+  S.loginCode = o.dataset.c; closeSheet(); renderLogin(); setTimeout(()=>$('lgPin').focus(), 80);
 });
-
-function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-let tt;
-function toast(m, t){ const el=$('toast'); el.textContent=m; el.className='toast show '+(t||''); clearTimeout(tt); tt=setTimeout(()=>el.className='toast', 3200); }
+$('cxInput').addEventListener('input', e => { $('cxOk').disabled = e.target.value.trim() !== 'ยกเลิก'; });
+$('cxInput').addEventListener('keydown', e => { if(e.key==='Enter' && !$('cxOk').disabled) $('cxOk').click(); });
+$('cxBack').onclick = () => { $('cxModal').classList.remove('show'); S.cx=null; };
+$('cxModal').addEventListener('click', e => { if(e.target.id==='cxModal'){ $('cxModal').classList.remove('show'); S.cx=null; } });
+$('cxOk').onclick = () => { if($('cxInput').value.trim()!=='ยกเลิก') return; $('cxModal').classList.remove('show'); doCancel(); };
 
 /* ---------- install tip ---------- */
 (function(){
@@ -515,7 +713,9 @@ function toast(m, t){ const el=$('toast'); el.textContent=m; el.className='toast
 
 if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
 document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible' && S.config && !S.busy) load(); });
-load();
+render();
+load().then(() => { if(S.token) api('me').then(d => { S.me = d.me; store.set('jv_me', JSON.stringify(d.me)); render(); }).catch(()=>{}); });
+}
 </script>
 </body>
 </html>

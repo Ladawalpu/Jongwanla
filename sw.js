@@ -1,5 +1,5 @@
 // แคชเฉพาะหน้าแอป (ข้อมูลการจองโหลดสดจาก Google Sheet ทุกครั้ง)
-const CACHE = 'jongwanla-v2';
+const CACHE = 'jongwanla-v4';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener('activate', e => {
