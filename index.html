@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#e6339a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="จองวันลา">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="favicon-32.png">
@@ -31,7 +31,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 /* header */
 header{
-  position:relative;color:#fff;padding:calc(18px + env(safe-area-inset-top)) 20px 64px;
+  position:relative;color:#fff;padding:calc(18px + env(safe-area-inset-top, 0px)) 20px 64px;
   background:radial-gradient(120% 140% at 0% 0%,var(--pink-2) 0%,var(--pink) 45%,var(--purple) 100%);
   border-radius:0 0 28px 28px;overflow:hidden
 }
@@ -45,6 +45,11 @@ header::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;hei
 .refresh.spin svg{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* เปิดจากไอคอนหน้าจอโฮม: เว้นที่ให้แถบสถานะ (เวลา/แบตเตอรี่) เสมอ */
+@media (display-mode: standalone){
+  header{padding-top:calc(18px + max(env(safe-area-inset-top, 0px), 50px))}
+  .toast{top:calc(12px + max(env(safe-area-inset-top, 0px), 50px))}
+}
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-top:14px}
 .lift{margin-top:-46px;position:relative;z-index:2}
 
@@ -410,9 +415,11 @@ function demoData(){
     ...na.map((n,i)=>({group:'NA',label:'ผู้ช่วยวิสัญญี (NA)',code:'NA '+pad(i+1),name:n}))];
   const t0 = Date.now() - 86400000, T = (h,mi) => t0 + h*3600000 + mi*60000;
   const b = {'08':{RN:[{n:'ลัดดาวัลย์',t:T(0,5)}],AS:[]},
-             '09':{RN:[{n:'ลัดดาวัลย์',t:T(0,6)},{n:'พัชรี',t:T(2,40)}],AS:[{n:'สุกัญญา',t:T(1,20)}]},
+             '09':{RN:[{n:'ลัดดาวัลย์',t:T(0,6)},{n:'พัชรี',t:T(2,40)}],AS:[{n:'สุกัญญา',t:T(1,20)}],
+                   RNx:[{n:'อัญชลี',t:T(0,6)+412,c:T(5,0)}]},
              '03':{RN:[],AS:[{n:'มารศรี',t:T(1,19)}]},
-             '15':{RN:[{n:'ขวัญฤทัย',t:T(3,2)}],AS:[{n:'วนิดา',t:T(0,50)},{n:'ดารณี',t:T(4,11)}]}};
+             '15':{RN:[{n:'ขวัญฤทัย',t:T(3,2)}],AS:[{n:'วนิดา',t:T(0,50)},{n:'ดารณี',t:T(4,11)}],
+                   ASx:[{n:'สุจิตรา',t:T(0,20),c:T(2,0)}]}};
   return { ok:true, config:{year:yy,month:m,daysInMonth:new Date(yy,m,0).getDate(),open:true,maxRN:0,maxAS:0,notice:''}, names, bookings:b };
 }
 function demoApi(action, p){
