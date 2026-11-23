@@ -153,7 +153,12 @@ table.bk td{padding:9px 8px;border-top:1px solid var(--line);vertical-align:midd
 table.bk td.no{width:44px;text-align:center;font-family:"Prompt";font-weight:600;color:var(--pink)}
 table.bk td.ts{white-space:nowrap;color:var(--muted);font-size:14px}
 table.bk td.ts b{color:var(--ink);font-weight:500}
+table.bk td.ts .dt{display:block;font-size:12px;line-height:1.3}
+table.bk td.ts{line-height:1.35}
+table.bk td.ts small{font-size:12px;color:var(--purple-2);font-weight:600}
 table.bk tr.me td{background:var(--pink-soft)}
+table.bk tr.cx td{opacity:.45}
+table.bk tr.cx td.nm em{font-style:normal;font-size:13px;color:var(--warn)}
 table.bk tr.me td.nm{font-weight:600;color:#b0186f}
 .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:40;background:rgba(42,22,51,.45)}
 .modal.show{display:flex}
@@ -177,10 +182,10 @@ table.bk tr.me td.nm{font-weight:600;color:#b0186f}
 .pin:focus{border-color:var(--pink)}
 .btn.full{width:100%;margin-top:16px}
 .lnote{text-align:center;color:var(--muted);font-size:13px;margin:12px 0 0}
-.me{display:flex;align-items:center;gap:12px}
-.me .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--pink);font-family:"Prompt";font-weight:600;font-size:19px;flex:none}
-.me b{font-family:"Prompt";font-weight:600;font-size:18px;display:block}
-.me small{color:var(--muted);font-size:14px}
+.mecard{display:flex;align-items:center;gap:12px}
+.mecard .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--pink-soft);color:var(--pink);font-family:"Prompt";font-weight:600;font-size:19px;flex:none}
+.mecard b{font-family:"Prompt";font-weight:600;font-size:18px;display:block}
+.mecard small{color:var(--muted);font-size:14px}
 .badge{display:inline-block;background:var(--purple);color:#fff;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600;margin-left:4px;vertical-align:1px}
 .links{display:flex;gap:8px;margin-top:12px}
 .links button{flex:1;padding:9px;border-radius:11px;background:var(--purple-soft);color:var(--purple);font-size:14px;font-weight:600}
@@ -234,7 +239,7 @@ table.bk td.ac{width:1%;text-align:right;padding-right:2px}
   <!-- ===== แอปหลัก ===== -->
   <div id="appView" style="display:none">
   <div class="card lift">
-    <div class="me">
+    <div class="mecard">
       <div class="av" id="meAv">?</div>
       <div class="t">
         <b id="meName"></b>
@@ -339,7 +344,8 @@ table.bk td.ac{width:1%;text-align:right;padding-right:2px}
     <label class="flabel" for="pinNew2">ยืนยัน PIN ใหม่</label>
     <input class="pin" id="pinNew2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password">
     <div class="acts">
-      <button class="btn ghost" id="pinBack" style="flex:1">ภายหลัง</button>
+      <button class="btn ghost" id="pinBack" style="flex:1">ยกเลิก</button>
+      <button class="btn ghost" id="pinOut" style="flex:1;display:none">ออกจากระบบ</button>
       <button class="btn" id="pinOk">บันทึก PIN</button>
     </div>
   </div>
@@ -378,10 +384,17 @@ const S = {
 const pad = n => String(n).padStart(2,'0');
 const rowsFor = (d,g) => (((S.bookings[d]||{})[g||S.group]) || []).map(x => typeof x==='string' ? {n:x,t:0} : x);
 const listFor = (d,g) => rowsFor(d,g).map(x => x.n);
+const xRowsFor = (d,g) => (((S.bookings[d]||{})[(g||S.group)+'x']) || []);
+// รวมรายการปกติ + ยกเลิก เรียงตามเวลาที่จอง (ยกเลิกที่ไม่มีเวลาที่จองไว้ท้ายสุด)
+function mergedFor(d){
+  const a = rowsFor(d).map(r => Object.assign({x:false}, r));
+  const x = xRowsFor(d).map(r => Object.assign({x:true}, r));
+  return a.concat(x).sort((p,q) => (p.t||9e15) - (q.t||9e15) || (p.x - q.x));
+}
 const maxFor = () => S.group==='RN' ? S.config.maxRN : S.config.maxAS;
 const myGroupView = () => S.me && S.group===S.me.group;
 function fmtTs(t){ if(!t) return '—'; const d=new Date(t);
-  return d.getDate()+' '+TH_SHORT[d.getMonth()]+' '+String(d.getFullYear()+543).slice(-2)+' <b>'+pad(d.getHours())+':'+pad(d.getMinutes())+'</b>:'+pad(d.getSeconds()); }
+  return '<span class="dt">'+d.getDate()+' '+TH_SHORT[d.getMonth()]+' '+String(d.getFullYear()+543).slice(-2)+'</span><b>'+pad(d.getHours())+':'+pad(d.getMinutes())+'</b>:'+pad(d.getSeconds())+'<small>.'+String(d.getMilliseconds()).padStart(3,'0')+'</small>'; }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let tt;
 function toast(m, t){ const el=$('toast'); el.textContent=m; el.className='toast show '+(t||''); clearTimeout(tt); tt=setTimeout(()=>el.className='toast', 3400); }
@@ -405,10 +418,14 @@ function demoData(){
 function demoApi(action, p){
   const D = S._demo, b = D.bookings;
   const who = code => { const n = D.names.find(x=>x.code===code); return n && {code:n.code,name:n.name,group:n.group==='RN'?'RN':'AS',admin:n.code==='000'}; };
-  if(action==='login'){ if(p.pin!=='1234') return {ok:false,error:'PIN ไม่ถูกต้อง (โหมดตัวอย่าง PIN = 1234)'}; return {ok:true,token:'demo:'+p.code,me:who(p.code),mustChange:false}; }
+  const pins = D.pins = D.pins || {};
+  if(action==='login'){ const want = pins[p.code] || '1234'; if(p.pin!==want) return {ok:false,error:'PIN ไม่ถูกต้อง (โหมดตัวอย่าง PIN เริ่มต้น = 1234)'}; return {ok:true,token:'demo:'+p.code,me:who(p.code),mustChange:!pins[p.code]}; }
   const me = who(String(p.token||'').slice(5)); if(!me) return {ok:false,auth:true,error:'กรุณาเข้าสู่ระบบ'};
-  if(action==='me') return {ok:true,me}; if(action==='logout'||action==='changePin') return {ok:true};
-  const rm = (g,name,days) => { let n=0; days.forEach(d=>{ const a=(b[d]||{})[g]||[]; const i=a.findIndex(x=>x.n===name); if(i>=0){a.splice(i,1);n++;} }); return n; };
+  const must = !pins[me.code];
+  if(action==='me') return {ok:true,me,mustChange:must}; if(action==='logout') return {ok:true};
+  if(action==='changePin'){ const cur = pins[me.code] || '1234'; if(p.oldPin!==cur) return {ok:false,error:'PIN เดิมไม่ถูกต้อง'}; if(p.newPin===p.oldPin) return {ok:false,error:'PIN ใหม่ต้องไม่ซ้ำกับ PIN เดิม'}; pins[me.code]=p.newPin; return {ok:true}; }
+  if(must) return {ok:false,mustChange:true,error:'กรุณาตั้ง PIN ใหม่ของคุณเองก่อนใช้งาน'};
+  const rm = (g,name,days) => { let n=0; days.forEach(d=>{ const a=(b[d]||{})[g]||[]; const i=a.findIndex(x=>x.n===name); if(i>=0){ const r=a.splice(i,1)[0]; (b[d][g+'x']=b[d][g+'x']||[]).push({n:r.n,t:r.t,c:Date.now()}); n++;} }); return n; };
   if(action==='cancel') return {ok:true,removed:rm(me.group,me.name,p.days),bookings:b};
   if(action==='adminCancel'){ if(!me.admin) return {ok:false,error:'เฉพาะผู้ดูแล'}; return {ok:true,removed:rm(p.group,p.name,p.days),bookings:b}; }
   if(action==='book'){ const added=[]; p.days.forEach(d=>{ b[d]=b[d]||{RN:[],AS:[]}; if(!b[d][me.group].some(x=>x.n===me.name)){ b[d][me.group].push({n:me.name,t:Date.now()}); added.push(d);} }); return {ok:true,added,skipped:[],bookings:b}; }
@@ -424,6 +441,7 @@ async function api(action, payload){
     d = await r.json();
   }
   if(d && d.auth){ localLogout(); toast(d.error || 'กรุณาเข้าสู่ระบบใหม่', 'err'); throw new Error('__auth'); }
+  if(d && d.mustChange && !d.ok){ forcePin(); throw new Error(d.error); }
   if(!d || !d.ok) throw new Error((d && d.error) || 'ไม่สำเร็จ');
   return d;
 }
@@ -453,30 +471,36 @@ async function doLogin(){
     store.set('jv_token', d.token); store.set('jv_me', JSON.stringify(d.me));
     $('lgPin').value = '';
     render();
-    toast('สวัสดีค่ะ ' + d.me.name, 'ok');
-    if(d.mustChange) openPin(true);
+    if(d.mustChange) forcePin(); else toast('สวัสดีค่ะ ' + d.me.name, 'ok');
   }catch(e){ if(e.message!=='__auth') toast(e.message, 'err'); }
   finally{ $('lgGo').disabled = false; $('lgGo').textContent = 'เข้าสู่ระบบ'; }
 }
 function localLogout(){
   S.token=''; S.me=null; S.add.clear(); S.del.clear(); S.lastPin='';
-  store.del('jv_token'); store.del('jv_me'); render();
+  store.del('jv_token'); store.del('jv_me'); store.del('jv_must');
+  $('pinModal').classList.remove('show'); render();
 }
 async function doLogout(){ const t=S.token; localLogout(); try{ if(t) await api('logout',{token:t}); }catch(e){} }
 
-function openPin(first){
-  $('pinTitle').textContent = first ? 'ตั้ง PIN ของคุณเอง' : 'เปลี่ยน PIN';
-  $('pinSub').textContent = first ? 'PIN ที่ได้รับเป็น PIN ชั่วคราว แนะนำให้ตั้งใหม่ (ตัวเลข 4–6 หลัก)' : 'PIN เป็นตัวเลข 4–6 หลัก ใช้เข้าสู่ระบบครั้งต่อไป';
-  $('pinOldWrap').style.display = first && S.lastPin ? 'none' : '';
-  $('pinOld').value = first ? S.lastPin : ''; $('pinNew').value=''; $('pinNew2').value='';
+function forcePin(){ store.set('jv_must','1'); openPin(true); }
+function openPin(forced){
+  S.pinForced = !!forced;
+  $('pinTitle').textContent = forced ? 'ตั้ง PIN ใหม่ก่อนใช้งาน' : 'เปลี่ยน PIN';
+  $('pinSub').textContent = forced ? 'PIN ที่ได้รับเป็น PIN ชั่วคราว ต้องตั้ง PIN ของคุณเอง (ตัวเลข 4–6 หลัก) ก่อนจองหรือยกเลิกวันลา' : 'PIN เป็นตัวเลข 4–6 หลัก ใช้เข้าสู่ระบบครั้งต่อไป';
+  $('pinOldWrap').style.display = forced && S.lastPin ? 'none' : '';
+  $('pinOld').value = forced ? S.lastPin : ''; $('pinNew').value=''; $('pinNew2').value='';
+  $('pinBack').style.display = forced ? 'none' : '';
+  $('pinOut').style.display = forced ? '' : 'none';
   $('pinModal').classList.add('show');
+  setTimeout(()=>$(forced && S.lastPin ? 'pinNew' : 'pinOld').focus(), 80);
 }
 async function savePin(){
   const o=$('pinOld').value.trim(), n=$('pinNew').value.trim(), n2=$('pinNew2').value.trim();
   if(!/^\d{4,6}$/.test(n)) return toast('PIN ใหม่ต้องเป็นตัวเลข 4–6 หลัก','err');
   if(n!==n2) return toast('PIN ใหม่ทั้ง 2 ช่องไม่ตรงกัน','err');
+  if(n===o) return toast('PIN ใหม่ต้องไม่ซ้ำกับ PIN เดิม','err');
   $('pinOk').disabled = true;
-  try{ await api('changePin',{oldPin:o,newPin:n}); $('pinModal').classList.remove('show'); S.lastPin=''; toast('บันทึก PIN ใหม่แล้ว','ok'); }
+  try{ await api('changePin',{oldPin:o,newPin:n}); $('pinModal').classList.remove('show'); S.lastPin=''; S.pinForced=false; store.del('jv_must'); toast('บันทึก PIN ใหม่แล้ว ใช้ PIN นี้ครั้งต่อไปนะคะ','ok'); }
   catch(e){ if(e.message!=='__auth') toast(e.message,'err'); }
   finally{ $('pinOk').disabled = false; }
 }
@@ -602,15 +626,19 @@ function renderList(){
   let opt = '<option value="">ทุกวัน</option>';
   for(let d=1; d<=c.daysInMonth; d++){ const k=pad(d), n=listFor(k).length; opt += '<option value="'+k+'"'+(S.dayFilter===k?' selected':'')+'>วันที่ '+d+(n?' ('+n+')':'')+'</option>'; }
   $('dayFilter').innerHTML = opt;
-  const days = S.dayFilter ? [S.dayFilter] : Object.keys(S.bookings).filter(k=>listFor(k).length).sort();
-  if(!days.length || (S.dayFilter && !listFor(S.dayFilter).length)){ $('bkList').innerHTML = '<div class="none">ยังไม่มีการจอง</div>'; return; }
+  const has = k => listFor(k).length || xRowsFor(k).length;
+  const days = S.dayFilter ? [S.dayFilter] : Object.keys(S.bookings).filter(has).sort();
+  if(!days.length || (S.dayFilter && !has(S.dayFilter))){ $('bkList').innerHTML = '<div class="none">ยังไม่มีการจอง</div>'; return; }
   const canX = r => me.admin || (myGroupView() && r.n===me.name && c.open);
   $('bkList').innerHTML = days.map(k => {
-    const dt = new Date(c.year, c.month-1, +k), we = dt.getDay()===0||dt.getDay()===6, rows = rowsFor(k);
-    return '<div class="dgrp"><h4 class="'+(we?'we':'')+'">วัน'+DAYNAME[dt.getDay()]+'ที่ '+(+k)+' '+TH_SHORT[c.month-1]+'<span>'+rows.length+' คน</span></h4>'+
+    const dt = new Date(c.year, c.month-1, +k), we = dt.getDay()===0||dt.getDay()===6, rows = mergedFor(k);
+    const active = rows.filter(r=>!r.x).length, xn = rows.length - active; let no = 0;
+    return '<div class="dgrp"><h4 class="'+(we?'we':'')+'">วัน'+DAYNAME[dt.getDay()]+'ที่ '+(+k)+' '+TH_SHORT[c.month-1]+'<span>'+active+' คน'+(xn?' · ยกเลิก '+xn:'')+'</span></h4>'+
       '<table class="bk"><thead><tr><th style="text-align:center">ลำดับ</th><th>วันเวลาที่จอง</th><th>ชื่อ</th><th></th></tr></thead><tbody>'+
-      rows.map((r,i)=>'<tr class="'+(myGroupView()&&r.n===me.name?'me':'')+'"><td class="no">'+(i+1)+'</td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+'</td>'+
-        '<td class="ac">'+(canX(r)?'<button class="xbtn" data-d="'+k+'" data-n="'+esc(r.n)+'">ยกเลิก</button>':'')+'</td></tr>').join('')+
+      rows.map(r => r.x
+        ? '<tr class="cx"><td class="no"></td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+' <em>(ยกเลิก)</em></td><td class="ac"></td></tr>'
+        : '<tr class="'+(myGroupView()&&r.n===me.name?'me':'')+'"><td class="no">'+(++no)+'</td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+'</td>'+
+          '<td class="ac">'+(canX(r)?'<button class="xbtn" data-d="'+k+'" data-n="'+esc(r.n)+'">ยกเลิก</button>':'')+'</td></tr>').join('')+
       '</tbody></table></div>';
   }).join('');
 }
@@ -678,7 +706,9 @@ $('lgGo').onclick = doLogin;
 $('lgPin').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 $('btnOut').onclick = doLogout;
 $('btnPin').onclick = () => openPin(false);
-$('pinBack').onclick = () => $('pinModal').classList.remove('show');
+$('pinBack').onclick = () => { if(!S.pinForced) $('pinModal').classList.remove('show'); };
+$('pinOut').onclick = doLogout;
+$('pinNew2').addEventListener('keydown', e => { if(e.key==='Enter') savePin(); });
 $('pinOk').onclick = savePin;
 $('refresh').onclick = load;
 $('vCal').onclick = () => { S.view='cal'; render(); };
@@ -714,7 +744,11 @@ $('cxOk').onclick = () => { if($('cxInput').value.trim()!=='ยกเลิก')
 if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
 document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible' && S.config && !S.busy) load(); });
 render();
-load().then(() => { if(S.token) api('me').then(d => { S.me = d.me; store.set('jv_me', JSON.stringify(d.me)); render(); }).catch(()=>{}); });
+if(S.me && store.get('jv_must')) forcePin();
+load().then(() => { if(S.token) api('me').then(d => {
+  S.me = d.me; store.set('jv_me', JSON.stringify(d.me)); render();
+  if(d.mustChange) forcePin(); else { store.del('jv_must'); if(S.pinForced){ $('pinModal').classList.remove('show'); S.pinForced=false; } }
+}).catch(()=>{}); });
 }
 </script>
 </body>
