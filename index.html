@@ -480,7 +480,7 @@ async function doLogin(){
     store.set('jv_token', d.token); store.set('jv_me', JSON.stringify(d.me));
     $('lgPin').value = '';
     render();
-    if(d.mustChange) forcePin(); else toast('สวัสดีค่ะ ' + d.me.name, 'ok');
+    if(d.mustChange) forcePin(); else toast('สวัสดีค่ะ คุณ' + d.me.name, 'ok');
   }catch(e){ if(e.message!=='__auth') toast(e.message, 'err'); }
   finally{ $('lgGo').disabled = false; $('lgGo').textContent = 'เข้าสู่ระบบ'; }
 }
