@@ -135,7 +135,8 @@ header::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;hei
 .opt small{margin-left:auto;color:var(--muted);font-size:12px}
 
 /* toast */
-.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-140%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-size:15px;z-index:50;transition:transform .25s;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-140%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-size:15px;z-index:50;transition:transform .25s,opacity .25s,visibility .25s;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.toast:not(.show){opacity:0;visibility:hidden}
 .toast.show{transform:translate(-50%,0)}
 .toast.ok{background:var(--ok)} .toast.err{background:#b4233a}
 
@@ -641,10 +642,10 @@ function renderList(){
   $('bkList').innerHTML = days.map(k => {
     const dt = new Date(c.year, c.month-1, +k), we = dt.getDay()===0||dt.getDay()===6, rows = mergedFor(k);
     const active = rows.filter(r=>!r.x).length, xn = rows.length - active; let no = 0;
-    return '<div class="dgrp"><h4 class="'+(we?'we':'')+'">วัน'+DAYNAME[dt.getDay()]+'ที่ '+(+k)+' '+TH_SHORT[c.month-1]+'<span>'+active+' คน'+(xn?' · ยกเลิก '+xn:'')+'</span></h4>'+
+    return '<div class="dgrp"><h4 class="'+(we?'we':'')+'">วัน'+DAYNAME[dt.getDay()]+'ที่ '+(+k)+' '+TH_SHORT[c.month-1]+'<span>'+active+' คน'+(xn?' · ยกเลิกแล้ว '+xn:'')+'</span></h4>'+
       '<table class="bk"><thead><tr><th style="text-align:center">ลำดับ</th><th>วันเวลาที่จอง</th><th>ชื่อ</th><th></th></tr></thead><tbody>'+
       rows.map(r => r.x
-        ? '<tr class="cx"><td class="no"></td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+' <em>(ยกเลิก)</em></td><td class="ac"></td></tr>'
+        ? '<tr class="cx"><td class="no"></td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+' <em>(ยกเลิกแล้ว)</em></td><td class="ac"></td></tr>'
         : '<tr class="'+(myGroupView()&&r.n===me.name?'me':'')+'"><td class="no">'+(++no)+'</td><td class="ts">'+fmtTs(r.t)+'</td><td class="nm">'+esc(r.n)+'</td>'+
           '<td class="ac">'+(canX(r)?'<button class="xbtn" data-d="'+k+'" data-n="'+esc(r.n)+'">ยกเลิก</button>':'')+'</td></tr>').join('')+
       '</tbody></table></div>';
