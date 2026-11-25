@@ -243,6 +243,8 @@ table.bk td.ac{width:1%;text-align:right;padding-right:2px}
 #cal{touch-action:pan-y}
 .grid.slide-l{animation:sl .22s ease}.grid.slide-r{animation:sr .22s ease}
 @keyframes sl{from{transform:translateX(28px);opacity:.3}}@keyframes sr{from{transform:translateX(-28px);opacity:.3}}
+.notice.offline{background:#eceff3;border-color:#cfd6df;color:#3d4a5c;display:flex;align-items:center;gap:10px}
+.notice.offline svg{width:20px;height:20px;flex:none}
 .install{display:none;margin-top:14px;font-size:14px;color:var(--purple);background:var(--purple-soft);border-radius:14px;padding:10px 14px}
 </style>
 </head>
@@ -547,8 +549,11 @@ async function api(action, payload){
   let d;
   if(!API_URL) d = demoApi(action, body);
   else{
-    const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body) });
-    d = await r.json();
+    if(!navigator.onLine) throw new Error('ไม่มีอินเทอร์เน็ต · ตอนนี้ดูข้อมูลได้อย่างเดียว');
+    try{
+      const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(body) });
+      d = await r.json();
+    }catch(e){ throw new Error('เชื่อมต่อไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง'); }
   }
   if(d && d.auth){ localLogout(); toast(d.error || 'กรุณาเข้าสู่ระบบใหม่', 'err'); throw new Error('__auth'); }
   if(d && d.mustChange && !d.ok){ forcePin(); throw new Error(d.error); }
@@ -556,18 +561,41 @@ async function api(action, payload){
   return d;
 }
 
+/* ---------- ข้อมูลล่าสุดเก็บในเครื่อง (ใช้ตอนออฟไลน์) ---------- */
+function saveCache(d){ store.set('cache', JSON.stringify({ t: Date.now(), config: d.config, names: d.names, bookings: d.bookings || {} })); }
+function useCache(markOffline){
+  let c = null; try{ c = JSON.parse(store.get('cache') || 'null'); }catch(e){}
+  if(!c || !c.config) return false;
+  S.config = c.config; S.names = c.names || []; S.all = c.bookings || {}; applyMonth();
+  S.offline = markOffline ? { t: c.t } : null;
+  render();
+  return true;
+}
+function fmtStamp(t){ const d = new Date(t); return d.getDate()+' '+TH_SHORT[d.getMonth()]+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
+
 async function load(){
   $('refresh').classList.add('spin');
   try{
     let d;
     if(!API_URL){ d = S._demo || (S._demo = demoData()); }
-    else { const r = await fetch(API_URL + '?t=' + Date.now()); d = await r.json(); }
+    else {
+      if(!navigator.onLine) throw new Error('offline');
+      const r = await fetch(API_URL + '?t=' + Date.now()); d = await r.json();
+    }
     if(!d.ok) throw new Error(d.error || 'โหลดข้อมูลไม่สำเร็จ');
-    S.config = d.config; S.names = d.names; S.all = d.bookings || {}; applyMonth();
+    const wasOffline = !!S.offline;
+    S.config = d.config; S.names = d.names; S.all = d.bookings || {}; S.offline = null; applyMonth();
+    if(API_URL) saveCache(d);
     render();
-  }catch(e){ toast('โหลดข้อมูลไม่สำเร็จ: ' + e.message, 'err'); }
+    if(wasOffline) toast('กลับมาออนไลน์แล้ว · ข้อมูลเป็นปัจจุบัน', 'ok');
+  }catch(e){
+    if(API_URL && useCache(true)) toast('ออฟไลน์ · แสดงข้อมูลล่าสุดเมื่อ ' + fmtStamp(S.offline.t), 'err');
+    else toast(e.message==='offline' ? 'ไม่มีอินเทอร์เน็ต กรุณาลองใหม่' : 'โหลดข้อมูลไม่สำเร็จ: ' + e.message, 'err');
+  }
   finally{ $('refresh').classList.remove('spin'); }
 }
+window.addEventListener('online', () => { if(!S.busy) load(); });
+window.addEventListener('offline', () => { if(S.config && !S.offline){ S.offline = { t: Date.now() }; render(); } });
 
 /* ---------- เดือน: เดือนนี้ + เดือนหน้า ---------- */
 function applyMonth(){
@@ -755,9 +783,10 @@ function render(){
     S.monthTag = rel===-1 ? 'เดือนก่อน' : rel===0 ? 'เดือนนี้' : rel===1 ? 'เดือนหน้า' : ''; }
   { const ms = S.config.months || [], i = ms.findIndex(m => m.key===S.mkey);
     $('mPrev').disabled = $('lPrev').disabled = i <= 0; $('mNext').disabled = $('lNext').disabled = i < 0 || i >= ms.length-1; }
-  $('calHint').textContent = (S.monthTag ? S.monthTag + ' · ' : '') + (S.past ? 'ดูอย่างเดียว' : calView() ? (S.as ? 'จองแทนคุณ' + S.as.name : 'แตะวันเพื่อเลือก / ยกเลิก') : 'ดูอย่างเดียว (ไม่ใช่กลุ่มของ' + (S.as ? 'คุณ' + S.as.name : 'คุณ') + ')');
+  $('calHint').textContent = (S.monthTag ? S.monthTag + ' · ' : '') + (S.offline ? 'ออฟไลน์ · ดูอย่างเดียว' : S.past ? 'ดูอย่างเดียว' : calView() ? (S.as ? 'จองแทนคุณ' + S.as.name : 'แตะวันเพื่อเลือก / ยกเลิก') : 'ดูอย่างเดียว (ไม่ใช่กลุ่มของ' + (S.as ? 'คุณ' + S.as.name : 'คุณ') + ')');
 
   let bn = '';
+  if(S.offline) bn += '<div class="notice offline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.8M19 13a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01"/></svg><span><b>ออฟไลน์</b> · ข้อมูลล่าสุดเมื่อ ' + fmtStamp(S.offline.t) + ' · ดูได้อย่างเดียว</span></div>';
   if(S.as) bn += '<div class="notice proxy"><span>จองแทน <b>คุณ' + esc(S.as.name) + '</b></span><button id="stopProxy">‹ กลับ</button></div>';
   if(!API_URL) bn += '<div class="notice demo">โหมดตัวอย่าง — ยังไม่ได้เชื่อม Google Sheet ข้อมูลจะไม่ถูกบันทึก</div>';
   if(!c.open) bn += '<div class="notice closed">ขณะนี้ปิดรับจองแล้ว (ดูรายชื่อได้อย่างเดียว)</div>';
@@ -883,6 +912,7 @@ $('cal').addEventListener('click', e => {
   const b = e.target.closest('.day'); if(!b || !S.me) return;
   if(S.swiped && Date.now() - S.swiped < 400) return;
   const k = b.dataset.d; S.focus = k;
+  if(S.offline){ render(); toast('ออฟไลน์อยู่ · ดูได้อย่างเดียว จองได้เมื่อเน็ตกลับมา', 'err'); return; }
   if(S.past){ render(); toast('เดือนที่ผ่านมา ดูได้อย่างเดียว'); return; }
   if(!S.config.open && !S.as){ render(); return; }
   if(!calView()){ render(); toast('จองได้เฉพาะกลุ่ม' + GNAME[actor().group]); return; }
@@ -995,6 +1025,7 @@ if('serviceWorker' in navigator && location.protocol==='https:') navigator.servi
 document.addEventListener('visibilitychange', () => { if(document.visibilityState==='visible' && S.config && !S.busy) load(); });
 render();
 if(S.me && store.get('jv_must')) forcePin();
+if(API_URL) useCache(false);          // เปิดแอปเร็ว: แสดงข้อมูลล่าสุดทันที แล้วโหลดของใหม่ตามมา
 load().then(() => { if(S.token) api('me').then(d => {
   S.me = d.me; store.set('jv_me', JSON.stringify(d.me)); render();
   if(d.mustChange) forcePin(); else { store.del('jv_must'); if(S.pinForced){ $('pinModal').classList.remove('show'); S.pinForced=false; } }
