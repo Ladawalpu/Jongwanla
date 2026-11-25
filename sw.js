@@ -2,7 +2,7 @@
 // ดึงไฟล์ใหม่จาก GitHub ทุกครั้งที่ออนไลน์ (no-cache) → อัปเดตแล้วเห็นทันทีเมื่อเปิดแอปใหม่
 // ชื่อแคชผูกกับโฟลเดอร์ของแอป → หลายแอปในโดเมนเดียวกันไม่ลบแคชของกันและกัน
 const PFX = 'jongwanla:' + self.registration.scope + ':';
-const CACHE = PFX + 'v28';
+const CACHE = PFX + 'v30';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon-192.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => {
