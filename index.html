@@ -245,6 +245,10 @@ table.bk td.ac{width:1%;text-align:right;padding-right:2px}
 @keyframes sl{from{transform:translateX(28px);opacity:.3}}@keyframes sr{from{transform:translateX(-28px);opacity:.3}}
 .notice.offline{background:#eceff3;border-color:#cfd6df;color:#3d4a5c;display:flex;align-items:center;gap:10px}
 .notice.offline svg{width:20px;height:20px;flex:none}
+.times{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px}
+.times input{font:inherit;font-size:16px;padding:9px 10px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);width:136px;text-align:center}
+.times input:focus{outline:none;border-color:#4d8ee8}
+#actDurOpts button.on{border-color:#4d8ee8;background:#eef5ff;color:#1f5fbf}
 .install{display:none;margin-top:14px;font-size:14px;color:var(--purple);background:var(--purple-soft);border-radius:14px;padding:10px 14px}
 </style>
 </head>
@@ -405,7 +409,12 @@ table.bk td.ac{width:1%;text-align:right;padding-right:2px}
     <div id="actWrap" style="display:none">
       <div class="qk"><button data-q="ประชุม">ประชุม</button><button data-q="อบรม">อบรม</button><button data-q="Cvt">Cvt</button><button data-q="ศึกษาดูงาน">ศึกษาดูงาน</button></div>
       <label class="flabel" for="actNote">ระบุกิจกรรม</label>
-      <input class="txt" id="actNote" maxlength="60" placeholder="เช่น ประชุม, อบรม หรืออื่นๆ" autocomplete="off">
+      <input class="txt" id="actNote" maxlength="40" placeholder="เช่น ประชุม, อบรม หรืออื่นๆ" autocomplete="off">
+      <span class="sublabel">ช่วงเวลา</span>
+      <div class="opts2" id="actDurOpts"><button data-v="">เต็มวัน</button><button data-v="1/2ช">1/2ช (เช้า)</button><button data-v="1/2บ">1/2บ (บ่าย)</button><button data-v="custom">ระบุเวลา</button></div>
+      <div class="times" id="actTimes" style="display:none">
+        <input type="time" id="tFrom" aria-label="เวลาเริ่ม" value="08:30"><span>ถึง</span><input type="time" id="tTo" aria-label="เวลาสิ้นสุด" value="12:00">
+      </div>
     </div>
     <div class="acts">
       <button class="btn ghost" id="bkBack" style="flex:1">กลับ</button>
@@ -664,7 +673,7 @@ async function savePin(){
 /* ---------- book / cancel ---------- */
 function openBook(){
   const days = [...S.add].sort(); if(!days.length || S.busy) return;
-  S.kind = ''; S.dur = ''; S.lt = ''; $('actNote').value = '';
+  S.kind = ''; S.dur = ''; S.lt = ''; S.adur = ''; $('actNote').value = '';
   $('bkSub').textContent = 'วันที่ ' + days.map(Number).join(', ') + ' ' + TH_SHORT[S.config.month-1] + ' · เลือกประเภท';
   syncKind(); $('bkModal').classList.add('show');
 }
@@ -675,21 +684,31 @@ function syncKind(){
   $('leaveWrap').style.display = S.kind==='ลา' ? '' : 'none';
   document.querySelectorAll('#durOpts button').forEach(b => b.classList.toggle('on', b.dataset.v===S.dur));
   document.querySelectorAll('#ltOpts button').forEach(b => b.classList.toggle('on', b.dataset.v===S.lt));
-  $('bkOk').disabled = !S.kind || (S.kind==='กิจกรรม' && !$('actNote').value.trim());
+  document.querySelectorAll('#actDurOpts button').forEach(b => b.classList.toggle('on', b.dataset.v===S.adur));
+  $('actTimes').style.display = S.adur==='custom' ? '' : 'none';
+  const badTime = S.adur==='custom' && !(actTimeText());
+  $('bkOk').disabled = !S.kind || (S.kind==='กิจกรรม' && (!$('actNote').value.trim() || badTime));
+}
+function actTimeText(){
+  if(S.adur!=='custom') return S.adur;
+  const a = $('tFrom').value, b = $('tTo').value;
+  return a && b && a < b ? a + '–' + b + ' น.' : '';
 }
 async function book(){
   const days = [...S.add].sort(); if(!days.length || S.busy || !S.kind) return;
-  const kind = S.kind, note = kind==='กิจกรรม' ? $('actNote').value.trim() : [S.lt, S.dur].filter(Boolean).join(' · ');
+  const kind = S.kind;
+  const extra = kind==='กิจกรรม' ? actTimeText() : [S.lt, S.dur].filter(Boolean).join(' · ');   // รายละเอียดเสริม (ช่วงเวลา/ประเภทลา)
+  const note = kind==='กิจกรรม' ? [$('actNote').value.trim(), extra].filter(Boolean).join(' · ') : extra;
   $('bkModal').classList.remove('show');
   S.busy = true; renderBar();
   try{
     const d = S.as ? await api('adminBook', { code:S.as.code, days, kind, note }) : await api('book', { days, kind, note });
     setAll(d.bookings); S.add.clear();
-    const half = kind==='ลา' && /1\/2/.test(S.dur||'');              // ลาครึ่งวัน (1/2ช, 1/2บ) นับ 0.5 วัน
+    const half = /1\/2/.test((kind==='ลา' ? S.dur : S.adur) || '');   // ครึ่งวัน (1/2ช, 1/2บ) นับ 0.5 วัน
     const amt = d.added.length * (half ? 0.5 : 1);
     const qty = (Number.isInteger(amt) ? amt : amt.toFixed(1)) + ' วัน';
     let msg = d.added.length
-      ? 'จอง' + (kind==='ลา' ? 'ลา' : note) + (S.as ? 'ให้คุณ' + S.as.name + ' ' : '') + 'สำเร็จ ' + qty + (kind==='ลา' && note ? ' (' + note + ')' : '') + ' ✓'
+      ? 'จอง' + (kind==='ลา' ? 'ลา' : 'กิจกรรม ' + $('actNote').value.trim() + ' ') + (S.as ? 'ให้คุณ' + S.as.name + ' ' : '') + 'สำเร็จ ' + qty + (extra ? ' (' + extra + ')' : '') + ' ✓'
       : 'ไม่มีวันที่จองเพิ่ม';
     if(d.skipped && d.skipped.length) msg += ' · ข้าม: ' + d.skipped.map(s=>s.replace(/^0/,'')).join(', ');
     toast(msg, d.added.length ? 'ok' : 'err');
@@ -932,6 +951,8 @@ $('bkList').addEventListener('click', e => {
   openCancel({ group:S.group, name:x.dataset.n, days:[x.dataset.d] });
 });
 $('kLeave').onclick = () => { S.kind='ลา'; syncKind(); };
+document.querySelectorAll('#actDurOpts button').forEach(b => b.onclick = () => { S.adur = b.dataset.v; syncKind(); });
+['tFrom','tTo'].forEach(id => $(id).addEventListener('input', syncKind));
 document.querySelectorAll('#durOpts button').forEach(b => b.onclick = () => { S.dur = b.dataset.v; syncKind(); });
 document.querySelectorAll('#ltOpts button').forEach(b => b.onclick = () => { S.lt = S.lt===b.dataset.v ? '' : b.dataset.v; syncKind(); });
 $('kAct').onclick = () => { S.kind='กิจกรรม'; syncKind(); setTimeout(()=>$('actNote').focus(), 50); };
