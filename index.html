@@ -254,6 +254,29 @@ table.bk td.ac{width:1%;text-align:right;padding-right:2px}
 .phname{color:#b26a00;font-style:italic}
 .mgassign{width:100%;padding:12px;border-radius:12px;border:1.5px dashed #ffb84d;background:#fff8ec;color:#8a5200;font-weight:600;font-size:15px}
 .install{display:none;margin-top:14px;font-size:14px;color:var(--purple);background:var(--purple-soft);border-radius:14px;padding:10px 14px}
+
+/* --- รองรับเครื่องที่ตั้งขนาดอักษรใหญ่ --- */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{overflow-x:clip}
+.grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+.seg,.vtabs,.cols,.kinds{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.day,.dow,.seg button,.vtabs button,.kinds button,.links button,.mecard>div{min-width:0}
+.day{aspect-ratio:auto;min-height:52px;padding:4px 0;font-size:min(17px,4.6vw);overflow:hidden}
+.day .cnt{font-size:min(11px,2.8vw);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:clip}
+.dow{font-size:min(13px,3.4vw)}
+.seg button,.vtabs button,.links button{overflow-wrap:anywhere;line-height:1.25}
+.cal-head{flex-wrap:wrap;gap:4px}
+.cal-head h2{font-size:min(18px,4.8vw);text-align:center}
+.mecard b,.who b{overflow-wrap:anywhere}
+.legend{gap:6px 12px}
+table.bk{table-layout:auto}
+table.bk td{overflow-wrap:anywhere}
+@media (max-width:380px){
+  .wrap{padding-left:10px;padding-right:10px}
+  .card{padding:12px}
+  .grid{gap:4px}
+  .day{border-radius:10px;min-height:46px}
+}
 </style>
 </head>
 <body>
