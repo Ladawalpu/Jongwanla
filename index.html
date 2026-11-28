@@ -271,6 +271,12 @@ html,body{overflow-x:clip}
 .legend{gap:6px 12px}
 table.bk{table-layout:auto}
 table.bk td{overflow-wrap:anywhere}
+table.bk td.ac{width:1%;white-space:nowrap;overflow-wrap:normal}
+.xbtn,.mgbtn{white-space:nowrap;overflow-wrap:normal;word-break:keep-all}
+table.bk td.nm em{white-space:nowrap}
+.grid.preview .day{opacity:.38;cursor:default}
+.grid.preview .day:active{transform:none}
+.grid.preview .dow{opacity:.5}
 @media (max-width:380px){
   .wrap{padding-left:10px;padding-right:10px}
   .card{padding:12px}
@@ -585,7 +591,7 @@ function demoApi(action, p){
 
 /* ---------- API ---------- */
 async function api(action, payload){
-  const body = Object.assign({ action, token:S.token, month:S.mkey }, payload||{});
+  const body = Object.assign({ action, token:S.token, month:S.preview ? undefined : S.mkey }, payload||{});
   let d;
   if(!API_URL) d = demoApi(action, body);
   else{
@@ -641,9 +647,15 @@ window.addEventListener('offline', () => { if(S.config && !S.offline){ S.offline
 function applyMonth(){
   const ms = (S.config && S.config.months) || [];
   if(!ms.length) return;
+  /* เดือนถัดไปอีกเดือน: แสดงจางๆ ให้เห็นล่วงหน้า กดเลือกไม่ได้ (สร้างในแอป ไม่ได้มาจากเซิร์ฟเวอร์) */
+  if(!ms.some(m => m.preview)){
+    const L = ms[ms.length-1], d = new Date(L.year, L.month, 1), y = d.getFullYear(), mo = d.getMonth()+1;
+    ms.push({ key:y+'-'+pad(mo), year:y, month:mo, days:new Date(y,mo,0).getDate(), rel:(L.rel!==undefined?L.rel:ms.length-1)+1, bookable:false, preview:true, opens:L });
+  }
   if(!ms.some(m => m.key===S.mkey)) S.mkey = (ms.find(m => m.rel===0) || ms[0]).key;
   const m = ms.find(x => x.key===S.mkey);
   S.config.year = m.year; S.config.month = m.month; S.config.daysInMonth = m.days;
+  S.preview = !!m.preview;
   S.past = m.bookable === false;
   S.bookings = (S.all || {})[S.mkey] || {};
 }
@@ -849,10 +861,11 @@ function render(){
   $('calTitle').textContent = title;
   { const ms0 = S.config.months || [], i0 = ms0.findIndex(m => m.key===S.mkey);
     const rel = i0 >= 0 ? (ms0[i0].rel !== undefined ? ms0[i0].rel : i0) : null;
-    S.monthTag = rel===-1 ? 'เดือนก่อน' : rel===0 ? 'เดือนนี้' : rel===1 ? 'เดือนหน้า' : ''; }
+    S.monthTag = rel===-1 ? 'เดือนก่อน' : rel===0 ? 'เดือนนี้' : rel===1 ? 'เดือนหน้า' : '';
+    if(S.preview){ S.focus = null; const o = ms0[i0].opens; S.monthTag = 'ยังไม่เปิดจอง · เปิด 1 ' + TH_SHORT[o.month-1] + ' 00:00 น.'; } }
   { const ms = S.config.months || [], i = ms.findIndex(m => m.key===S.mkey);
     $('mPrev').disabled = $('lPrev').disabled = i <= 0; $('mNext').disabled = $('lNext').disabled = i < 0 || i >= ms.length-1; }
-  $('calHint').textContent = (S.monthTag ? S.monthTag + ' · ' : '') + (S.offline ? 'ออฟไลน์ · ดูอย่างเดียว' : S.past ? 'ดูอย่างเดียว' : calView() ? (S.as ? 'จองแทนคุณ' + S.as.name : 'แตะวันเพื่อเลือก / ยกเลิก') : 'ดูอย่างเดียว (ไม่ใช่กลุ่มของ' + (S.as ? 'คุณ' + S.as.name : 'คุณ') + ')');
+  $('calHint').textContent = S.preview ? S.monthTag : (S.monthTag ? S.monthTag + ' · ' : '') + (S.offline ? 'ออฟไลน์ · ดูอย่างเดียว' : S.past ? 'ดูอย่างเดียว' : calView() ? (S.as ? 'จองแทนคุณ' + S.as.name : 'แตะวันเพื่อเลือก / ยกเลิก') : 'ดูอย่างเดียว (ไม่ใช่กลุ่มของ' + (S.as ? 'คุณ' + S.as.name : 'คุณ') + ')');
 
   let bn = '';
   if(S.offline) bn += '<div class="notice offline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.8M19 13a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01"/></svg><span><b>ออฟไลน์</b> · ข้อมูลล่าสุดเมื่อ ' + fmtStamp(S.offline.t) + ' · ดูได้อย่างเดียว</span></div>';
@@ -878,7 +891,7 @@ function render(){
     const cnt = arr.length ? arr.length + (mx ? '/'+mx : '') + ' คน' : (mx ? '0/'+mx : '');
     h += '<button class="'+cls.join(' ')+'" data-d="'+k+'">'+d+'<span class="cnt">'+cnt+'</span></button>';
   }
-  $('cal').innerHTML = '<div class="grid'+(S.slide ? ' slide-'+S.slide : '')+'">'+h+'</div>'; S.slide = '';
+  $('cal').innerHTML = '<div class="grid'+(S.preview ? ' preview' : '')+(S.slide ? ' slide-'+S.slide : '')+'">'+h+'</div>'; S.slide = '';
   $('vCal').classList.toggle('on', S.view==='cal');
   $('vList').classList.toggle('on', S.view==='list');
   $('viewCal').style.display = S.view==='cal' ? '' : 'none';
@@ -992,6 +1005,7 @@ $('cal').addEventListener('click', e => {
   if(S.swiped && Date.now() - S.swiped < 400) return;
   const k = b.dataset.d; S.focus = k;
   if(S.offline){ render(); toast('ออฟไลน์อยู่ · ดูได้อย่างเดียว จองได้เมื่อเน็ตกลับมา', 'err'); return; }
+  if(S.preview){ const o = S.config.months.find(m => m.key===S.mkey).opens; render(); toast('ยังไม่เปิดจอง · เปิดวันที่ 1 ' + TH_MONTH[o.month-1] + ' เวลา 00:00 น.'); return; }
   if(S.past){ render(); toast('เดือนที่ผ่านมา ดูได้อย่างเดียว'); return; }
   if(!S.config.open && !S.as){ render(); return; }
   if(!calView()){ render(); toast('จองได้เฉพาะกลุ่ม' + GNAME[actor().group]); return; }
